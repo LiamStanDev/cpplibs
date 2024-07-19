@@ -1,15 +1,31 @@
 #pragma once
 
+#include "process.h"
+
 #include <cstdint>
 #include <fstream>
 #include <list>
 #include <memory>
 #include <ostream>
+#include <sstream>
 #include <string>
 #include <vector>
 
+#define LOG_STREAM(logger, level)                                              \
+  if (logger->getLevel() <= level)                                             \
+  LogEventTraker{                                                              \
+      LogEvent::ptr{new LogEvent{logger, level, __FILE__, __LINE__, 0,         \
+                                 getThreadId(), getFiberId(), std::time(0)}}}  \
+      .getStream()
+
+#define LOG_DEBUG(logger) LOG_STREAM(logger, LogLevel::DEBUG)
+#define LOG_INFO(logger) LOG_STREAM(logger, LogLevel::INFO)
+#define LOG_WARN(logger) LOG_STREAM(logger, LogLevel::WARN)
+#define LOG_ERROR(logger) LOG_STREAM(logger, LogLevel::ERROR)
+#define LOG_FATAL(logger) LOG_STREAM(logger, LogLevel::FATAL)
+
 namespace cpplibs {
-namespace logger {
+namespace log {
 
 class Logger;
 class LoggerAppender;
@@ -27,15 +43,21 @@ enum class LogLevel {
 class LogEvent {
 public:
   using ptr = std::shared_ptr<LogEvent>;
-  LogEvent();
+  LogEvent(std::shared_ptr<Logger> logger, LogLevel level, const char* file,
+           int32_t line, uint32_t uptime, int32_t threadId, uint32_t fiberId,
+           int64_t time);
 
   const char* getFile() const { return m_file; }
   int32_t getLine() const { return m_line; }
-  uint32_t getThreadId() const { return m_threadId; }
+  uint64_t getThreadId() const { return m_threadId; }
   uint32_t getFiberId() const { return m_fiberId; }
   uint64_t getTime() const { return m_time; }
   uint32_t getUptime() const { return m_uptime; }
-  const std::string& getContent() const { return m_content; }
+  const std::string getContent() const { return m_stream.str(); }
+
+  std::stringstream& getStream() { return m_stream; }
+  const std::shared_ptr<Logger>& getLogger() const { return m_logger; }
+  LogLevel getLevel() const { return m_level; }
 
 private:
   const char* m_file = nullptr; // file name
@@ -44,7 +66,21 @@ private:
   uint32_t m_fiberId = 0;       // fiber id
   uint64_t m_time = 0;          // timestamp
   uint32_t m_uptime = 0;        // running time
-  std::string m_content;
+
+  std::stringstream m_stream;
+  std::shared_ptr<Logger> m_logger;
+  LogLevel m_level;
+};
+
+class LogEventTraker {
+public:
+  LogEventTraker(LogEvent::ptr event);
+  ~LogEventTraker();
+
+  std::stringstream& getStream();
+
+private:
+  LogEvent::ptr m_event;
 };
 
 class LogFormatter {
@@ -69,6 +105,7 @@ public:
 private:
   std::string m_pattern;
   std::vector<FormatItem::ptr> m_items;
+  bool m_isError = false;
 };
 
 class LogAppender {
@@ -103,11 +140,13 @@ public:
   LogLevel getLevel() const { return m_level; }
   void setLevel(LogLevel level) { m_level = level; }
   const std::string& getName() { return m_name; }
+  const LogFormatter::ptr getFormatter() const { return m_formatter; }
 
 private:
   std::string m_name; // logger name
   LogLevel m_level;
   std::list<LogAppender::ptr> m_appenders;
+  LogFormatter::ptr m_formatter;
 };
 
 class StdoutLogAppender : public LogAppender {
@@ -134,5 +173,5 @@ private:
   std::ofstream m_filestream;
 };
 
-} // namespace logger
+} // namespace log
 } // namespace cpplibs
