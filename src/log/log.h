@@ -3,6 +3,7 @@
 #include "process.h"
 
 #include <cstdint>
+#include <ctime>
 #include <fstream>
 #include <list>
 #include <memory>
@@ -12,10 +13,10 @@
 #include <vector>
 
 #define LOG_STREAM(logger, level)                                              \
-  if (logger->getLevel() <= level)                                             \
-  LogEventTraker{                                                              \
-      LogEvent::ptr{new LogEvent{logger, level, __FILE__, __LINE__, 0,         \
-                                 getThreadId(), getFiberId(), std::time(0)}}}  \
+  LogEventTracker{std::shared_ptr<LogEvent>{new LogEvent{                      \
+                      level, __FILE__, __LINE__, 0, getThreadId(),             \
+                      getFiberId(), std::time(0)}},                            \
+                  logger}                                                      \
       .getStream()
 
 #define LOG_DEBUG(logger) LOG_STREAM(logger, LogLevel::DEBUG)
@@ -25,11 +26,8 @@
 #define LOG_FATAL(logger) LOG_STREAM(logger, LogLevel::FATAL)
 
 namespace cpplibs {
-namespace log {
-
 class Logger;
-class LoggerAppender;
-class LoggerFormatter;
+class LogAppender;
 
 enum class LogLevel {
   UNKNOWN = 0,
@@ -40,13 +38,16 @@ enum class LogLevel {
   FATAL = 5,
 };
 
+/**
+ * @brief Include the log detail information.
+ */
 class LogEvent {
 public:
   using ptr = std::shared_ptr<LogEvent>;
-  LogEvent(std::shared_ptr<Logger> logger, LogLevel level, const char* file,
-           int32_t line, uint32_t uptime, int32_t threadId, uint32_t fiberId,
-           int64_t time);
+  LogEvent(LogLevel level, const char* file, int32_t line, uint32_t uptime,
+           int32_t threadId, uint32_t fiberId, int64_t time);
 
+  LogLevel getLevel() const { return m_level; }
   const char* getFile() const { return m_file; }
   int32_t getLine() const { return m_line; }
   uint64_t getThreadId() const { return m_threadId; }
@@ -56,115 +57,132 @@ public:
   const std::string getContent() const { return m_stream.str(); }
 
   std::stringstream& getStream() { return m_stream; }
-  const std::shared_ptr<Logger>& getLogger() const { return m_logger; }
-  LogLevel getLevel() const { return m_level; }
 
 private:
+  LogLevel m_level;
   const char* m_file = nullptr; // file name
   int32_t m_line = 0;           // total line number
   uint32_t m_threadId = 0;      // thread id
   uint32_t m_fiberId = 0;       // fiber id
   uint64_t m_time = 0;          // timestamp
   uint32_t m_uptime = 0;        // running time
-
-  std::stringstream m_stream;
-  std::shared_ptr<Logger> m_logger;
-  LogLevel m_level;
+  std::stringstream m_stream;   // content
 };
 
-class LogEventTraker {
+/**
+ * @brief Track the lifetime of LogEvent. Inoder to commit log when LogEvent
+ * drop.
+ *
+ */
+class LogEventTracker {
 public:
-  LogEventTraker(LogEvent::ptr event);
-  ~LogEventTraker();
-
-  std::stringstream& getStream();
+  LogEventTracker(LogEvent::ptr event, const Logger& logger);
+  ~LogEventTracker();
+  std::stringstream& getStream() { return m_event->getStream(); }
 
 private:
-  LogEvent::ptr m_event;
+  std::shared_ptr<LogEvent> m_event;
+  const Logger& m_logger;
 };
 
+/**
+ * @brief Format the log pattern.
+ */
 class LogFormatter {
 public:
-  using ptr = std::shared_ptr<LogFormatter>;
-  LogFormatter(const std::string& pattern);
+  LogFormatter(const std::string& pattern =
+                   "%d{%Y-%m-%d %H:%M:%S}%T%t%T%F%T[%p]%T(%c)%T<%f:%l>%T%m%n");
 
-  std::string format(std::shared_ptr<Logger> logger, LogLevel level,
-                     LogEvent::ptr event);
+  std::string format(const Logger& logger, std::shared_ptr<LogEvent> event);
+
+  const std::string& getPattern() { return m_pattern; }
+  void setPattern(const std::string& pattern);
+
+private:
   void init();
 
 public:
   class FormatItem {
   public:
-    using ptr = std::shared_ptr<FormatItem>;
-
-    virtual ~FormatItem() {};
-    virtual void format(std::ostream& os, std::shared_ptr<Logger> logger,
-                        LogLevel level, LogEvent::ptr event) = 0;
+    virtual void format(std::ostream& os, const Logger& logger,
+                        LogEvent::ptr event) = 0;
+    virtual ~FormatItem() = default;
   };
 
 private:
   std::string m_pattern;
-  std::vector<FormatItem::ptr> m_items;
-  bool m_isError = false;
+  std::vector<std::unique_ptr<FormatItem>> m_items;
 };
 
-class LogAppender {
+/**
+ * @brief Manage log output (appender) and commit log.
+ */
+class Logger {
 public:
-  using ptr = std::shared_ptr<LogAppender>;
-  virtual ~LogAppender() {}
-
-  virtual void log(std::shared_ptr<Logger> logger, LogLevel level,
-                   LogEvent::ptr event) = 0;
-  void setFormatter(LogFormatter::ptr formatter) { m_formatter = formatter; }
-  LogFormatter::ptr getFormatter() const { return m_formatter; }
-
-protected:
-  LogLevel m_level;
-  LogFormatter::ptr m_formatter;
-};
-
-class Logger : public std::enable_shared_from_this<Logger> {
-public:
-  using ptr = std::shared_ptr<Logger>;
   Logger(const std::string& name = "root");
 
-  void log(LogLevel level, LogEvent::ptr event);
-  void debug(LogEvent::ptr event);
-  void info(LogEvent::ptr event);
-  void warn(LogEvent::ptr event);
-  void error(LogEvent::ptr event);
-  void fatal(LogEvent::ptr event);
+  void log(LogEvent::ptr event) const;
 
-  void addAppender(LogAppender::ptr appender);
-  void delAppender(LogAppender::ptr appender);
-  LogLevel getLevel() const { return m_level; }
-  void setLevel(LogLevel level) { m_level = level; }
-  const std::string& getName() { return m_name; }
-  const LogFormatter::ptr getFormatter() const { return m_formatter; }
+  void addAppender(std::unique_ptr<LogAppender> appender);
+  void delAppender(LogAppender* appender);
+  const std::string& getName() const { return m_name; }
 
 private:
   std::string m_name; // logger name
-  LogLevel m_level;
-  std::list<LogAppender::ptr> m_appenders;
-  LogFormatter::ptr m_formatter;
+  std::list<std::unique_ptr<LogAppender>> m_appenders;
 };
 
+/**
+ * @brief The base class for the sink of log output.
+ */
+class LogAppender {
+public:
+  LogAppender(LogLevel level);
+  LogAppender(std::unique_ptr<LogFormatter> formatter, LogLevel level);
+  virtual ~LogAppender() = default;
+  virtual void log(const Logger& logger, std::shared_ptr<LogEvent> event) = 0;
+
+  void setFormatter(std::unique_ptr<LogFormatter> formatter) {
+    m_formatter = std::move(formatter);
+  }
+  const LogFormatter* getFormatter() const { return m_formatter.get(); }
+  void setFormatter(const std::string& pattern);
+  LogLevel getLogLevel() const { return m_level; }
+  void setLogLevel(LogLevel level) { m_level = level; }
+
+protected:
+  std::unique_ptr<LogFormatter> m_formatter;
+  LogLevel m_level;
+};
+
+/**
+ * @brief standard log output implementation.
+ */
 class StdoutLogAppender : public LogAppender {
 public:
-  using ptr = std::shared_ptr<StdoutLogAppender>;
-
-  void log(Logger::ptr logger, LogLevel level, LogEvent::ptr event) override;
+  StdoutLogAppender(std::unique_ptr<LogFormatter> formatter, LogLevel level);
+  StdoutLogAppender(LogLevel level);
+  StdoutLogAppender();
+  virtual void log(const Logger& logger,
+                   std::shared_ptr<LogEvent> event) override;
 
 private:
 };
 
+/**
+ * @brief file log output implementation.
+ */
 class FileLogAppender : public LogAppender {
 public:
-  using ptr = std::shared_ptr<FileLogAppender>;
+  FileLogAppender(const std::string& filename,
+                  std::unique_ptr<LogFormatter> formatter, LogLevel level);
 
+  FileLogAppender(const std::string& filename, LogLevel level);
   FileLogAppender(const std::string& filename);
+  ~FileLogAppender();
 
-  void log(Logger::ptr logger, LogLevel level, LogEvent::ptr event) override;
+  virtual void log(const Logger& logger,
+                   std::shared_ptr<LogEvent> event) override;
 
   bool reopen();
 
@@ -173,5 +191,4 @@ private:
   std::ofstream m_filestream;
 };
 
-} // namespace log
 } // namespace cpplibs

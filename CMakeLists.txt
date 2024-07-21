@@ -9,7 +9,9 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 # C++ standard
 set(CMAKE_CXX_STANDARD_REQUIRED 20)
 set(CMAKE_CXX_STANDARD_REQUIRED true)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0 -g -Wall -Wextra -pthread -Wno-unused-function -Wno-unused-parameter")
+# use snaitize=address needs libasan, and sanitize=undefined needs libubsan
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0 -g -Wall -Wextra -fsanitize=address -fsanitize=undefined -pthread -Wno-unused-function -Wno-unused-parameter -fno-omit-frame-pointer")
+# set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0 -g -Wall -Wextra  -pthread -Wno-unused-function -Wno-unused-parameter -fno-omit-frame-pointer")
 
 # Variable
 set(SRC_DIR src)

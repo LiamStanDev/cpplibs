@@ -4,7 +4,6 @@
 #include <unistd.h>
 
 namespace cpplibs {
-namespace common {
 
 pid_t getThreadId() {
   pid_t id = syscall(SYS_getpid);
@@ -13,5 +12,4 @@ pid_t getThreadId() {
 
 uint32_t getFiberId() { return 0; }
 
-} // namespace common
 } // namespace cpplibs

@@ -1,14 +1,12 @@
 #pragma once
 
-#include <pthread.h>
 #include <cstdint>
+#include <pthread.h>
 
 namespace cpplibs {
-namespace common {
 
 pid_t getThreadId();
 
 uint32_t getFiberId();
 
-}
 } // namespace cpplibs
