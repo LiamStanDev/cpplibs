@@ -5,8 +5,10 @@
 
 namespace cpplibs {
 
-pid_t getThreadId();
+pid_t GetProcessId();
 
-uint32_t getFiberId();
+pid_t GetThreadId();
+
+uint32_t GetFiberId();
 
 } // namespace cpplibs

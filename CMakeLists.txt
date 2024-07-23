@@ -17,9 +17,12 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0 -g -Wall -Wextra -fsanitize=address 
 set(SRC_DIR src)
 
 # sub modules
-add_subdirectory(${SRC_DIR}/log)
+# add_subdirectory(${SRC_DIR}/log)
 add_subdirectory(${SRC_DIR}/common)
+add_subdirectory(${SRC_DIR}/thread)
 
-add_executable(test tests/test.cc)
-target_link_libraries(test PUBLIC log common)
+# add_executable(test tests/test.cc)
+add_executable(test tests/test_mutex.cc)
+target_include_directories(test PUBLIC ${SRC_DIR})
+target_link_libraries(test PRIVATE common thread)
 

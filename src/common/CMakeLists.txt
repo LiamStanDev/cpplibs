@@ -1,4 +1,6 @@
 project(common)
 
-add_library(common STATIC process.cc)
+set(SRC process.cc singleton.cc)
+
+add_library(common STATIC ${SRC})
 target_include_directories(common PUBLIC .)

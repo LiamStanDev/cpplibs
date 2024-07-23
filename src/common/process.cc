@@ -5,11 +5,16 @@
 
 namespace cpplibs {
 
-pid_t getThreadId() {
+pid_t GetProcessId() {
   pid_t id = syscall(SYS_getpid);
   return id;
 }
 
-uint32_t getFiberId() { return 0; }
+pid_t GetThreadId() {
+  pid_t id = syscall(SYS_gettid);
+  return id;
+}
+
+uint32_t GetFiberId() { return 0; }
 
 } // namespace cpplibs
