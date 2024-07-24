@@ -6,24 +6,18 @@
 #include <ctime>
 #include <fstream>
 #include <list>
+#include <map>
 #include <memory>
 #include <ostream>
 #include <sstream>
 #include <string>
 #include <vector>
 
-#define LOG_STREAM(logger, level)                                              \
-  LogEventTracker{std::shared_ptr<LogEvent>{new LogEvent{                      \
-                      level, __FILE__, __LINE__, 0, getThreadId(),             \
-                      getFiberId(), std::time(0)}},                            \
-                  logger}                                                      \
-      .getStream()
-
-#define LOG_DEBUG(logger) LOG_STREAM(logger, LogLevel::DEBUG)
-#define LOG_INFO(logger) LOG_STREAM(logger, LogLevel::INFO)
-#define LOG_WARN(logger) LOG_STREAM(logger, LogLevel::WARN)
-#define LOG_ERROR(logger) LOG_STREAM(logger, LogLevel::ERROR)
-#define LOG_FATAL(logger) LOG_STREAM(logger, LogLevel::FATAL)
+#define LOG_DEBUG(logger) log_tracker(logger, LogLevel::DEBUG).getStream()
+#define LOG_INFO(logger) log_tracker(logger, LogLevel::INFO).getStream()
+#define LOG_WARN(logger) log_tracker(logger, LogLevel::WARN).getStream()
+#define LOG_ERROR(logger) log_tracker(logger, LogLevel::ERROR).getStream()
+#define LOG_FATAL(logger) log_tracker(logger, LogLevel::FATAL).getStream()
 
 namespace cpplibs {
 class Logger;
@@ -70,9 +64,8 @@ private:
 };
 
 /**
- * @brief Track the lifetime of LogEvent. Inoder to commit log when LogEvent
+ * @brief Track the lifetime of LogEvent. In order to commit log when LogEvent
  * drop.
- *
  */
 class LogEventTracker {
 public:
@@ -83,6 +76,33 @@ public:
 private:
   std::shared_ptr<LogEvent> m_event;
   const Logger& m_logger;
+};
+
+inline LogEventTracker log_tracker(const Logger& logger, LogLevel level) {
+  return LogEventTracker{
+      std::shared_ptr<LogEvent>{
+          new LogEvent{level, __FILE__, __LINE__, 0, GetProcessId(),
+                       GetFiberId(), std::time(0)},
+      },
+      logger};
+}
+
+/**
+ * @brief Manage log output (appender) and commit log.
+ */
+class Logger {
+public:
+  Logger(const std::string& name = "root");
+
+  void log(LogEvent::ptr event) const;
+
+  void addAppender(std::shared_ptr<LogAppender> appender);
+  void delAppender(std::shared_ptr<LogAppender> appender);
+  const std::string& getName() const { return m_name; }
+
+private:
+  std::string m_name; // logger name
+  std::list<std::shared_ptr<LogAppender>> m_appenders;
 };
 
 /**
@@ -115,29 +135,11 @@ private:
 };
 
 /**
- * @brief Manage log output (appender) and commit log.
- */
-class Logger {
-public:
-  Logger(const std::string& name = "root");
-
-  void log(LogEvent::ptr event) const;
-
-  void addAppender(std::unique_ptr<LogAppender> appender);
-  void delAppender(LogAppender* appender);
-  const std::string& getName() const { return m_name; }
-
-private:
-  std::string m_name; // logger name
-  std::list<std::unique_ptr<LogAppender>> m_appenders;
-};
-
-/**
  * @brief The base class for the sink of log output.
  */
 class LogAppender {
 public:
-  LogAppender(LogLevel level);
+  explicit LogAppender(LogLevel level);
   LogAppender(std::unique_ptr<LogFormatter> formatter, LogLevel level);
   virtual ~LogAppender() = default;
   virtual void log(const Logger& logger, std::shared_ptr<LogEvent> event) = 0;
@@ -165,8 +167,6 @@ public:
   StdoutLogAppender();
   virtual void log(const Logger& logger,
                    std::shared_ptr<LogEvent> event) override;
-
-private:
 };
 
 /**
@@ -191,4 +191,19 @@ private:
   std::ofstream m_filestream;
 };
 
+class LoggerManager {
+public:
+  static std::shared_ptr<LoggerManager> GetInstance();
+  std::shared_ptr<Logger> getLogger(const std::string& name);
+  std::shared_ptr<Logger> getRoot() { return m_root; }
+
+private:
+  LoggerManager();
+
+private:
+  std::map<std::string, std::shared_ptr<Logger>> m_loggers;
+  std::shared_ptr<Logger> m_root;
+
+  static std::shared_ptr<LoggerManager> s_instance;
+};
 } // namespace cpplibs

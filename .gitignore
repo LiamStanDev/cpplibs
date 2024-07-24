@@ -3,3 +3,4 @@ bin
 lib
 .cache
 .gdb_history
+log.txt

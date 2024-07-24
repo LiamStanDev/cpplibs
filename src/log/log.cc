@@ -331,6 +331,9 @@ FileLogAppender::~FileLogAppender() {
 }
 
 void FileLogAppender::log(const Logger& logger, LogEvent::ptr event) {
+  if (!m_filestream.is_open()) {
+    reopen();
+  }
   if (event->getLevel() >= m_level) {
     m_filestream << m_formatter->format(logger, event);
     m_filestream.flush();
@@ -353,16 +356,44 @@ void Logger::log(LogEvent::ptr event) const {
   }
 }
 
-void Logger::addAppender(std::unique_ptr<LogAppender> appender) {
-  m_appenders.push_back(std::move(appender));
+void Logger::addAppender(std::shared_ptr<LogAppender> appender) {
+  m_appenders.push_back(appender);
 }
-void Logger::delAppender(LogAppender* appender) {
+
+void Logger::delAppender(std::shared_ptr<LogAppender> appender) {
   for (auto it = m_appenders.begin(); it != m_appenders.end(); ++it) {
-    if (it->get() == appender) {
+    if (*it == appender) {
       m_appenders.erase(it);
       break;
     }
   }
+}
+
+std::shared_ptr<LoggerManager> LoggerManager::s_instance = nullptr;
+
+std::shared_ptr<LoggerManager> LoggerManager::GetInstance() {
+  if (s_instance == nullptr) {
+    s_instance = std::shared_ptr<LoggerManager>{new LoggerManager{}};
+  }
+  return s_instance;
+}
+
+LoggerManager::LoggerManager() {
+  m_root.reset(new Logger{});
+  m_root->addAppender(std::shared_ptr<LogAppender>{new StdoutLogAppender{}});
+  m_loggers[m_root->getName()] = m_root;
+}
+
+std::shared_ptr<Logger> LoggerManager::getLogger(const std::string& name) {
+  auto it = m_loggers.find(name);
+  if (it != m_loggers.end()) {
+    return it->second;
+  }
+
+  // add new logger
+  std::shared_ptr<Logger> logger{new Logger{name}};
+  m_loggers[name] = logger;
+  return logger;
 }
 
 } // namespace cpplibs
