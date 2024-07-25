@@ -3,7 +3,7 @@
 #include <semaphore.h>
 #include <stdexcept>
 
-namespace cpplibs {
+namespace cosmic {
 
 Semaphore::Semaphore(uint32_t count) {
   // pshared = 0: means semaphore only share in this process.
@@ -37,4 +37,4 @@ void Semaphore::notify() {
   }
 }
 
-} // namespace cpplibs
+} 

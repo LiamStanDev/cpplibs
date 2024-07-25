@@ -1,10 +1,11 @@
-#include "cpplibs.h"
+#include "cosmic.h"
+
 #include <ctime>
 #include <iostream>
 #include <memory>
 
 int main() {
-  using namespace cpplibs;
+  using namespace cosmic;
 
   std::unique_ptr<Logger> logger{new Logger{}};
   std::shared_ptr<StdoutLogAppender> stdoutLogAppender{

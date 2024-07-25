@@ -1,12 +1,13 @@
 #pragma once
 
 #include <cstdint>
+#include <exception>
 #include <memory>
 #include <pthread.h>
 #include <semaphore.h>
 #include <stdexcept>
 
-namespace cpplibs {
+namespace cosmic {
 
 class Semaphore {
 public:
@@ -42,10 +43,11 @@ public:
       throw std::runtime_error("pthread_mutex_lock error");
     }
   }
-  ~MutexGuard() {
+  ~MutexGuard() noexcept {
     int res = pthread_mutex_unlock(&m_inner.mtx);
     if (res != 0) {
-      throw std::runtime_error("pthread_mutex_lock error");
+      // throw std::runtime_error("pthread_mutex_lock error");
+      std::terminate();
     }
   }
 
@@ -68,4 +70,4 @@ private:
   std::unique_ptr<MutexInner<T>> m_inner;
 };
 
-} // namespace cpplibs
+} // namespace cosmic

@@ -3,7 +3,7 @@
 #include <cstdint>
 #include <pthread.h>
 
-namespace cpplibs {
+namespace cosmic {
 
 pid_t GetProcessId();
 
@@ -11,4 +11,4 @@ pid_t GetThreadId();
 
 uint32_t GetFiberId();
 
-} // namespace cpplibs
+} // namespace cosmic

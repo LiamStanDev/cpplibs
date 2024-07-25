@@ -4,7 +4,7 @@
 #include <functional>
 #include <string>
 
-namespace cpplibs {
+namespace cosmic {
 
 /**
  * @brief Thread is a pthread wrapper.
@@ -44,4 +44,4 @@ private:
 
   Semaphore m_semaphore;
 };
-} // namespace cpplibs
+} 

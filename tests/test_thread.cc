@@ -1,35 +1,33 @@
-#include "cpplibs.h"
-#include "process.h"
-#include "thread.h"
+#include "cosmic.h"
 
 #include <iostream>
 #include <memory>
 #include <unistd.h>
 
 void func1() {
-  std::cout << "name: " << cpplibs::Thread::GetName()
-            << "\nthis.name: " << cpplibs::Thread::GetThis().GetName()
-            << "\nid: " << cpplibs::GetThreadId()
-            << "\nthis.id: " << cpplibs::Thread::GetThis().getId() << "\n"
+  std::cout << "name: " << cosmic::Thread::GetName()
+            << "\nthis.name: " << cosmic::Thread::GetThis().GetName()
+            << "\nid: " << cosmic::GetThreadId()
+            << "\nthis.id: " << cosmic::Thread::GetThis().getId() << "\n"
             << std::endl;
 
   sleep(20);
 }
 
 void func2() {
-  std::cout << "name: " << cpplibs::Thread::GetName()
-            << "this.name: " << cpplibs::Thread::GetThis().GetName()
-            << "id: " << cpplibs::GetThreadId()
-            << "this.id: " << cpplibs::Thread::GetThis().getId() << std::endl;
+  std::cout << "name: " << cosmic::Thread::GetName()
+            << "this.name: " << cosmic::Thread::GetThis().GetName()
+            << "id: " << cosmic::GetThreadId()
+            << "this.id: " << cosmic::Thread::GetThis().getId() << std::endl;
 }
 
 int main() {
   std::cout << "thread test begin" << std::endl;
 
-  std::vector<std::unique_ptr<cpplibs::Thread>> threads;
+  std::vector<std::unique_ptr<cosmic::Thread>> threads;
   for (int i = 0; i < 5; i++) {
-    std::unique_ptr<cpplibs::Thread> thread{
-        new cpplibs::Thread(&func1, "name_" + std::to_string(i))};
+    std::unique_ptr<cosmic::Thread> thread{
+        new cosmic::Thread(&func1, "name_" + std::to_string(i))};
     threads.push_back(std::move(thread));
   }
 

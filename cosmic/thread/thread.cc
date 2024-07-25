@@ -7,7 +7,7 @@
 #include <semaphore.h>
 #include <stdexcept>
 
-namespace cpplibs {
+namespace cosmic {
 
 static thread_local Thread* t_thread = nullptr;
 
@@ -77,4 +77,4 @@ void* Thread::run(void* args) {
   return 0;
 }
 
-} // namespace cpplibs
+} 

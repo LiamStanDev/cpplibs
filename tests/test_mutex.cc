@@ -1,10 +1,11 @@
-#include "sync.h"
+#include "cosmic.h"
+
 #include <iostream>
 #include <thread>
 #include <vector>
 
 void test_mutex() {
-  using namespace cpplibs;
+  using namespace cosmic;
   Mutex<int> mutex(0); // 初始化保护整数的 Mutex
 
   auto worker = [&mutex](int id) {

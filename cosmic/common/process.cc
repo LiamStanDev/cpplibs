@@ -3,7 +3,7 @@
 #include <sys/syscall.h> // include all macro of syscall
 #include <unistd.h>
 
-namespace cpplibs {
+namespace cosmic {
 
 pid_t GetProcessId() {
   pid_t id = syscall(SYS_getpid);
@@ -17,4 +17,4 @@ pid_t GetThreadId() {
 
 uint32_t GetFiberId() { return 0; }
 
-} // namespace cpplibs
+} // namespace cosmic

@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.12)
-project(cpplibs LANGUAGES CXX)
+project(cosmic LANGUAGES CXX)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS true)
 set(CMAKE_VERBOSE_MAKEFILE ON)
@@ -14,20 +14,26 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0 -g -Wall -Wextra -fno-omit-frame-poi
 # set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0 -g -Wall -Wextra  -pthread -Wno-unused-function -Wno-unused-parameter -fno-omit-frame-pointer")
 
 # Variable
-set(SRC_DIR src)
+set(SRC_DIR cosmic)
 
 # sub modules
 add_subdirectory(${SRC_DIR}/log)
 add_subdirectory(${SRC_DIR}/common)
 add_subdirectory(${SRC_DIR}/thread)
+add_subdirectory(${SRC_DIR}/config)
 
 add_executable(test_log tests/test_log.cc)
 target_include_directories(test_log PUBLIC ${SRC_DIR})
-target_link_libraries(test_log PRIVATE common log)
+target_link_libraries(test_log PUBLIC common log)
 
 add_executable(test_mutex tests/test_mutex.cc)
 target_include_directories(test_mutex PUBLIC  ${SRC_DIR})
-target_link_libraries(test_mutex PRIVATE common thread log)
+target_link_libraries(test_mutex PUBLIC common thread log)
+
+
+add_executable(test_config tests/test_config.cc)
+target_include_directories(test_config PUBLIC  ${SRC_DIR})
+target_link_libraries(test_config PUBLIC config)
 
 
 

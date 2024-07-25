@@ -6,7 +6,7 @@
 #include <map>
 #include <memory>
 
-namespace cpplibs {
+namespace cosmic {
 
 const char* stringifyLogLevel(LogLevel level) {
   switch (level) {
@@ -396,4 +396,4 @@ std::shared_ptr<Logger> LoggerManager::getLogger(const std::string& name) {
   return logger;
 }
 
-} // namespace cpplibs
+} // namespace cosmic

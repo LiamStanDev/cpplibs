@@ -13,13 +13,20 @@
 #include <string>
 #include <vector>
 
-#define LOG_DEBUG(logger) log_tracker(logger, LogLevel::DEBUG).getStream()
-#define LOG_INFO(logger) log_tracker(logger, LogLevel::INFO).getStream()
-#define LOG_WARN(logger) log_tracker(logger, LogLevel::WARN).getStream()
-#define LOG_ERROR(logger) log_tracker(logger, LogLevel::ERROR).getStream()
-#define LOG_FATAL(logger) log_tracker(logger, LogLevel::FATAL).getStream()
+#define LOG_DEBUG(logger)                                                      \
+  cosmic::log_tracker(logger, cosmic::LogLevel::DEBUG).getStream()
+#define LOG_INFO(logger)                                                       \
+  cosmic::log_tracker(logger, cosmic::LogLevel::INFO).getStream()
+#define LOG_WARN(logger)                                                       \
+  cosmic::log_tracker(logger, cosmic::LogLevel::WARN).getStream()
+#define LOG_ERROR(logger)                                                      \
+  cosmic::log_tracker(logger, cosmic::LogLevel::ERROR).getStream()
+#define LOG_FATAL(logger)                                                      \
+  cosmic::log_tracker(logger, cosmic::LogLevel::FATAL).getStream()
 
-namespace cpplibs {
+#define ROOT_LOGGER() *cosmic::LoggerManager::GetInstance()->getRoot()
+
+namespace cosmic {
 class Logger;
 class LogAppender;
 
@@ -206,4 +213,4 @@ private:
 
   static std::shared_ptr<LoggerManager> s_instance;
 };
-} // namespace cpplibs
+} // namespace cosmic
