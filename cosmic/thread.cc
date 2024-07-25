@@ -1,7 +1,6 @@
-#include "thread.h"
+#include "cosmic/thread.h"
 
-#include "process.h"
-
+#include "cosmic/process.h"
 #include <functional>
 #include <pthread.h>
 #include <semaphore.h>
@@ -77,4 +76,4 @@ void* Thread::run(void* args) {
   return 0;
 }
 
-} 
+} // namespace cosmic

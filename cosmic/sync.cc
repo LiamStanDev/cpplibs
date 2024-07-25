@@ -1,4 +1,4 @@
-#include "sync.h"
+#include "cosmic/sync.h"
 
 #include <semaphore.h>
 #include <stdexcept>

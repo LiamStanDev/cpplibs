@@ -19,6 +19,7 @@ sudo dnf install boost-devel libubsan libasan
 - bin - binary output
 - tests - testing code
 - build - build intermediate
+- deps - third-party libraries
 
 ## Log System
 
@@ -34,7 +35,7 @@ sudo dnf install boost-devel libubsan libasan
 
 ## Config System
 
-I use ymal to config our system.
+I use yaml to config our system by leveraging [yaml-cpp](https://github.com/jbeder/yaml-cpp).
 
 ## Thread
 

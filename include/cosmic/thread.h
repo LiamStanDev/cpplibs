@@ -1,6 +1,6 @@
 #pragma once
 
-#include "sync.h"
+#include "cosmic/sync.h"
 #include <functional>
 #include <string>
 
@@ -44,4 +44,4 @@ private:
 
   Semaphore m_semaphore;
 };
-} 
+} // namespace cosmic

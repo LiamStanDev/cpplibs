@@ -1,12 +1,13 @@
 #pragma once
 
-#include "log.h"
+#include "cosmic/log.h"
 #include <boost/lexical_cast.hpp>
 #include <exception>
 #include <map>
 #include <memory>
 #include <stdexcept>
 #include <string>
+#include <yaml-cpp/yaml.h>
 
 namespace cosmic {
 

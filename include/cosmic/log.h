@@ -1,6 +1,6 @@
 #pragma once
 
-#include "process.h"
+#include "cosmic/process.h"
 
 #include <cstdint>
 #include <ctime>
@@ -13,16 +13,21 @@
 #include <string>
 #include <vector>
 
-#define LOG_DEBUG(logger)                                                      \
-  cosmic::log_tracker(logger, cosmic::LogLevel::DEBUG).getStream()
-#define LOG_INFO(logger)                                                       \
-  cosmic::log_tracker(logger, cosmic::LogLevel::INFO).getStream()
-#define LOG_WARN(logger)                                                       \
-  cosmic::log_tracker(logger, cosmic::LogLevel::WARN).getStream()
-#define LOG_ERROR(logger)                                                      \
-  cosmic::log_tracker(logger, cosmic::LogLevel::ERROR).getStream()
-#define LOG_FATAL(logger)                                                      \
-  cosmic::log_tracker(logger, cosmic::LogLevel::FATAL).getStream()
+#define LOG_STREAM(logger, level)                                              \
+  cosmic::LogEventTracker{                                                     \
+      std::shared_ptr<cosmic::LogEvent>{                                       \
+          new cosmic::LogEvent{level, __FILE__, __LINE__, 0,                   \
+                               cosmic::GetProcessId(), cosmic::GetFiberId(),   \
+                               std::time(0)},                                  \
+      },                                                                       \
+      logger}                                                                  \
+      .getStream()
+
+#define LOG_DEBUG(logger) LOG_STREAM(logger, cosmic::LogLevel::DEBUG)
+#define LOG_INFO(logger) LOG_STREAM(logger, cosmic::LogLevel::INFO)
+#define LOG_WARN(logger) LOG_STREAM(logger, cosmic::LogLevel::WARN)
+#define LOG_ERROR(logger) LOG_STREAM(logger, cosmic::LogLevel::ERROR)
+#define LOG_FATAL(logger) LOG_STREAM(logger, cosmic::LogLevel::FATAL)
 
 #define ROOT_LOGGER() *cosmic::LoggerManager::GetInstance()->getRoot()
 
@@ -84,15 +89,6 @@ private:
   std::shared_ptr<LogEvent> m_event;
   const Logger& m_logger;
 };
-
-inline LogEventTracker log_tracker(const Logger& logger, LogLevel level) {
-  return LogEventTracker{
-      std::shared_ptr<LogEvent>{
-          new LogEvent{level, __FILE__, __LINE__, 0, GetProcessId(),
-                       GetFiberId(), std::time(0)},
-      },
-      logger};
-}
 
 /**
  * @brief Manage log output (appender) and commit log.

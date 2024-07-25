@@ -15,25 +15,25 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0 -g -Wall -Wextra -fno-omit-frame-poi
 
 # Variable
 set(SRC_DIR cosmic)
+set(INC_DIR include)
+set(DEPS_DIR deps)
+set(TEST_DIR tests)
+
+file(GLOB SOURCES "${SRC_DIR}/*.cc")
 
 # sub modules
-add_subdirectory(${SRC_DIR}/log)
-add_subdirectory(${SRC_DIR}/common)
-add_subdirectory(${SRC_DIR}/thread)
-add_subdirectory(${SRC_DIR}/config)
+add_subdirectory(${DEPS_DIR}/yaml-cpp)
 
-add_executable(test_log tests/test_log.cc)
-target_include_directories(test_log PUBLIC ${SRC_DIR})
-target_link_libraries(test_log PUBLIC common log)
+# main library
+add_library(${PROJECT_NAME} SHARED ${SOURCES})
+target_include_directories(${PROJECT_NAME} 
+    PUBLIC ${INC_DIR}
+    PRIVATE
+)
+target_link_libraries(${PROJECT_NAME} 
+    PUBLIC yaml-cpp
+    PRIVATE
+)
 
-add_executable(test_mutex tests/test_mutex.cc)
-target_include_directories(test_mutex PUBLIC  ${SRC_DIR})
-target_link_libraries(test_mutex PUBLIC common thread log)
-
-
-add_executable(test_config tests/test_config.cc)
-target_include_directories(test_config PUBLIC  ${SRC_DIR})
-target_link_libraries(test_config PUBLIC config)
-
-
-
+# test
+add_subdirectory(${TEST_DIR})
